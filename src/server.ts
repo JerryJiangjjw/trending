@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path'; // Import path module
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -12,6 +13,10 @@ import { getDouyinTrending } from './services/douyin';
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Serve static files from the project root
+app.use(express.static(path.join(__dirname, '..'))); // Serve files from project root (correct path)
+
 app.use(express.json());
 
 class TrendingMcpServer {

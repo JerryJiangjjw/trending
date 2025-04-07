@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Topics</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .platform-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            flex: 1;
+            min-width: 300px;
+        }
+        .platform-card h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            text-transform: capitalize;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+        a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .hotness {
+            font-size: 0.9em;
+            color: #666;
+            margin-left: 10px;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 15px;
+            text-align: right;
+        }
+        #loading {
+            text-align: center;
+            font-size: 1.2em;
+            margin-top: 50px;
+        }
+        #error {
+            color: red;
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Trending Topics</h1>
+    <div id="loading">Loading...</div>
+    <div id="error" style="display: none;"></div>
+    <div id="trending-container" class="container"></div>
+
+    <script>
+        async function fetchTrendingData() {
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const container = document.getElementById('trending-container');
+
+            try {
+                const response = await fetch('http://127.0.0.1:3000/api/trending');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+
+                loadingDiv.style.display = 'none';
+
+                if (result.success && Array.isArray(result.data)) {
+                    result.data.forEach(platformData => {
+                        if (platformData && platformData.platform && Array.isArray(platformData.items)) {
+                            const platformCard = document.createElement('div');
+                            platformCard.className = 'platform-card';
+
+                            const title = document.createElement('h2');
+                            title.textContent = platformData.platform;
+                            platformCard.appendChild(title);
+
+                            const list = document.createElement('ul');
+                            platformData.items.forEach(item => {
+                                const listItem = document.createElement('li');
+                                const link = document.createElement('a');
+                                link.href = item.url;
+                                link.textContent = item.title;
+                                link.target = '_blank'; // Open in new tab
+                                listItem.appendChild(link);
+
+                                if (item.hot) {
+                                    const hotness = document.createElement('span');
+                                    hotness.className = 'hotness';
+                                    hotness.textContent = `(${item.hot})`;
+                                    listItem.appendChild(hotness);
+                                }
+                                list.appendChild(listItem);
+                            });
+                            platformCard.appendChild(list);
+
+                            const timestamp = document.createElement('div');
+                            timestamp.className = 'timestamp';
+                            timestamp.textContent = `Updated: ${new Date(platformData.timestamp).toLocaleString()}`;
+                            platformCard.appendChild(timestamp);
+
+                            container.appendChild(platformCard);
+                        }
+                    });
+                } else {
+                    throw new Error(result.error || 'Failed to parse trending data');
+                }
+
+            } catch (error) {
+                console.error('Error fetching trending data:', error);
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = `Error loading data: ${error.message}`;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Fetch data when the page loads
+        fetchTrendingData();
+    </script>
+</body>
+</html>
